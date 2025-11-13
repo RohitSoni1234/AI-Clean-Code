@@ -30,3 +30,29 @@ pre {
   overflow-x: auto;
   max-height: 400px;
 }
+
+.prose {
+  line-height: 1.7;
+  color: #1e293b;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  color: #111827;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose code {
+  background: #f3f4f6;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.prose pre {
+  background: #1e293b;
+  color: #f9fafb;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+}

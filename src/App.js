@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function App() {
   const [originalCode, setOriginalCode] = useState("");
@@ -21,7 +23,6 @@ function App() {
       css: "css",
       json: "json",
       xml: "xml",
-      // Add other extensions as needed
     };
     return map[ext] || "text";
   };
@@ -37,28 +38,22 @@ function App() {
     }
   };
 
-  // 1. Call Gemini API for cleaning (STRICTLY CODE ONLY)
+  // Call Gemini API for cleaning
   const cleanCode = async () => {
     if (!originalCode) return alert("Upload a file first!");
     setLoading(true);
     try {
       const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
-      
-      // 💡 CHANGE HERE: Strict instructions to return ONLY the code.
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
       const prompt = `
         Please clean, format, and optimize the following ${language} code. Focus on readability, best practices, and minor efficiency improvements.
-        
-        IMPORTANT: Return ONLY the cleaned code as a raw string. Do not include any surrounding text, markdown formatting (like triple backticks), or explanations.
-
-        Here is the original code:
-        
+        IMPORTANT: Return ONLY the cleaned code as raw text — no markdown or explanations.
+        Code:
         ${originalCode}
       `;
       const result = await model.generateContent(prompt);
-
-      
-      setCleanedCode(result.response.text().trim()); 
+      setCleanedCode(result.response.text().trim());
     } catch (err) {
       console.error(err);
       alert("Error calling Gemini API. Check console.");
@@ -66,7 +61,7 @@ function App() {
     setLoading(false);
   };
 
-  // 2. Call Gemini API for explanation (STRUCTURED EXPLANATION)
+  // Call Gemini API for explanation
   const explainCode = async () => {
     if (!cleanedCode) return alert("Clean the code first!");
     setLoading(true);
@@ -74,27 +69,17 @@ function App() {
       const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-      // 💡 PROMPT RETAINED: Requests markdown and specific sections.
       const explainPrompt = `
-        Please explain the following ${language} code in a proper, structured, and easy-to-read way.
-        
-        Use **Markdown formatting**, including headings, bullet points, and code snippets, to break down the logic. 
-        
-        Structure your explanation into these parts:
-        1. Overall Goal: What is the primary purpose of the code?
-        2. Key Components/Functions: Describe what each major function or block of code does.
-        3. Step-by-Step Logic: Trace the flow of data or execution.
-        4. Conclusion: Summarize the output.
-        
-        
-
-        Here is the code:
-        
+        Please explain the following ${language} code in Markdown.
+        Use clear sections with headings and bullet points:
+        1. Overall Goal
+        2. Key Components/Functions
+        3. Step-by-Step Logic
+        4. Conclusion
+        Code:
         ${cleanedCode}
       `;
-      
       const result = await model.generateContent(explainPrompt);
-
       setExplanation(result.response.text());
     } catch (err) {
       console.error(err);
@@ -113,7 +98,7 @@ function App() {
   };
 
   return (
-    <div className="p-6 font-sans">
+    <div className="p-6 font-sans text-white">
       <h1 className="text-2xl font-bold mb-4">Clean Code AI Assistant</h1>
 
       <input type="file" onChange={handleFileUpload} className="mb-4" />
@@ -144,30 +129,31 @@ function App() {
         </>
       )}
 
-      {/* Side by Side View */}
+      {/* Side-by-side view */}
       <div className="grid grid-cols-2 gap-4 mt-6">
         <div>
           <h2 className="font-semibold mb-2">Original Code</h2>
-          <pre className="bg-gray-100 p-2 rounded overflow-x-auto h-80">
+          <pre className="bg-gray-100 text-black p-2 rounded overflow-x-auto h-80">
             {originalCode}
           </pre>
         </div>
         <div>
           <h2 className="font-semibold mb-2">Cleaned Code</h2>
-          <pre className="bg-green-100 p-2 rounded overflow-x-auto h-80">
+          <pre className="bg-green-100 text-black p-2 rounded overflow-x-auto h-80">
             {cleanedCode}
           </pre>
         </div>
       </div>
 
-      {/* Explanation */}
+      {/* Markdown Explanation */}
       {explanation && (
-        // Note: The browser will display the Markdown formatting as plain text 
-        // within this <p> tag. You may need a dedicated Markdown renderer library 
-        // (like 'react-markdown') if you want the headings/bullets to render fully.
         <div className="mt-6">
-          <h2 className="font-semibold mb-2">Code Explanation</h2>
-          <p className="bg-yellow-100 p-3 rounded whitespace-pre-wrap">{explanation}</p>
+          <h2 className="font-semibold mb-2 text-xl text-white">Code Explanation</h2>
+          <div className="bg-white text-black p-4 rounded-lg shadow-md prose max-w-none overflow-y-auto max-h-[500px]">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {explanation}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
     </div>
